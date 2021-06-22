@@ -222,7 +222,19 @@
 
   /**
    * Camelize a hyphen-delimited string.
+   * 横线-的转换成驼峰写法
+   * 可以让这样的的属性 v-model 变成 vModel
    */
+  //  camelize = cachedFn(str) => {
+  //   var hit = cache[str];
+  //   return hit || (cache[str] = fn(str))
+  // }
+  // 如果 str 存在就返回 hit
+  // 不存在 就返回 cache[str] = (str) => {
+  //   return str.replace(camelizeRE, function (_, c) { return c ? c.toUpperCase() : ''; })
+  // };
+  // replace(reg, str)  第一个参数:规定子字符串或要替换的模式的 RegExp 对象。     第二个参数:一个字符串值。规定了替换文本或生成替换文本的函数。
+  // replace 第二个参数为 function的时候 第一个参数为 匹配的 字符串 -m,第二个是 (\w) 匹配的m,然后返回 M去替换匹配的 -m
   var camelizeRE = /-(\w)/g;
   var camelize = cached(function (str) {
     return str.replace(camelizeRE, function (_, c) { return c ? c.toUpperCase() : ''; })
@@ -230,6 +242,7 @@
 
   /**
    * Capitalize a string.
+   * 将首字母变成大写
    */
   var capitalize = cached(function (str) {
     return str.charAt(0).toUpperCase() + str.slice(1)
@@ -237,9 +250,13 @@
 
   /**
    * Hyphenate a camelCase string.
+   * \b 匹配 字符串的第一个
+   * \B 匹配除了第一个之后的字符串
    */
   var hyphenateRE = /\B([A-Z])/g;
   var hyphenate = cached(function (str) {
+    //大写字母，加完减号又转成小写了 比如把驼峰 aBc 变成了 a-bc 如 ABC转为 a-b-c
+    //匹配大写字母并且两面不是空白的 替换成 '-' + '字母' 在全部转换成小写
     return str.replace(hyphenateRE, '-$1').toLowerCase()
   });
 
@@ -249,33 +266,45 @@
    * since native bind is now performant enough in most browsers.
    * But removing it would mean breaking code that was able to run in
    * PhantomJS 1.x, so this must be kept for backward compatibility.
+   * apply 和 call 改变 this
    */
 
+  //  apply：调用一个对象的一个方法，用另一个对象替换当前对象。例如：B.apply(A, arguments);即A对象应用B对象的方法。
+  //  call：调用一个对象的一个方法，用另一个对象替换当前对象。例如：B.call(A, args1,args2);即A对象调用B对象的方法。
   /* istanbul ignore next */
   function polyfillBind(fn, ctx) {
     function boundFn(a) {
       var l = arguments.length;
-      return l
-        ? l > 1
-          ? fn.apply(ctx, arguments)
-          : fn.call(ctx, a)
-        : fn.call(ctx)
+      return l ? l > 1 ? fn.apply(ctx, arguments) : fn.call(ctx, a) : fn.call(ctx)
     }
 
     boundFn._length = fn.length;
     return boundFn
   }
 
+  // bind 改变指向
   function nativeBind(fn, ctx) {
     return fn.bind(ctx)
   }
 
+  // bing 方法
   var bind = Function.prototype.bind
     ? nativeBind
     : polyfillBind;
 
   /**
    * Convert an Array-like object to a real Array.
+   * 将类似数组的对象转换为真实数组
+   * 类似数组
+   *  1. 它必须是一个对象
+      2. 它有 length 属性
+   * let arrayLike = {
+      '0': 'a',
+      '1': 'b',
+      '2': 'c',
+      length: 3
+    };
+   * 
    */
   function toArray(list, start) {
     start = start || 0;
@@ -289,6 +318,7 @@
 
   /**
    * Mix properties into target object.
+   * 将属性混合到目标对象中
    */
   function extend(to, _from) {
     for (var key in _from) {
@@ -299,6 +329,7 @@
 
   /**
    * Merge an Array of Objects into a single Object.
+   * 将对象数组合并为单个对象。
    */
   function toObject(arr) {
     var res = {};
@@ -314,6 +345,7 @@
 
   /**
    * Perform no operation.
+   * 不执行任何操作。
    * Stubbing args to make Flow happy without leaving useless transpiled code
    * with ...rest (https://flow.org/blog/2017/05/07/Strict-Function-Call-Arity/).
    */
@@ -321,6 +353,7 @@
 
   /**
    * Always return false.
+   * 总是返回false。
    */
   var no = function (a, b, c) { return false; };
 
@@ -328,11 +361,15 @@
 
   /**
    * Return the same value.
+   * 返回相同的值。
    */
   var identity = function (_) { return _; };
 
   /**
    * Generate a string containing static keys from compiler modules.
+   * 从编译器模块生成包含静态键的字符串。
+   *    [{ staticKeys:1},{staticKeys:2},{staticKeys:3}]
+   * 连接数组对象中的 staticKeys key值，连接成一个字符串 str=‘1,2,3’
    */
   function genStaticKeys(modules) {
     return modules.reduce(function (keys, m) {
